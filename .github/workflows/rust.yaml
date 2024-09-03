@@ -12,8 +12,19 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  tests:
+  outdated:
+    name: Outdated dependencies
+    runs-on: ubuntu-latest
 
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install cargo-outdated
+      run: cargo install --locked cargo-outdated
+    - name: Check for outdated dependencies
+      run: cargo outdated -R --exit-code 1 
+      
+  tests:
+    name: Tests
     runs-on: ubuntu-latest
 
     steps:
