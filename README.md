@@ -22,8 +22,8 @@ tokio-retry = "0.4"
 ## Examples
 
 ```rust
-use tokio_retry::Retry;
-use tokio_retry::strategy::{ExponentialBackoff, jitter};
+use tokio_retry2::Retry;
+use tokio_retry2::strategy::{ExponentialBackoff, jitter};
 
 async fn action() -> Result<u64, ()> {
     // do some real-world stuff here...
