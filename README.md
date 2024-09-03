@@ -15,7 +15,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tokio-retry = "0.3"
+tokio-retry = "0.4"
 ```
 
 ## Examples

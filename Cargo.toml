@@ -1,6 +1,6 @@
 [package]
 name = "tokio-retry"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Sam Rijs <srijs@airpost.net>"]
 description = "Extensible, asynchronous retry behaviours for futures/tokio"
 license = "MIT"
@@ -8,12 +8,19 @@ readme = "README.md"
 repository = "https://github.com/srijs/rust-tokio-retry"
 documentation = "https://docs.rs/tokio-retry"
 keywords = ["futures", "tokio", "retry", "exponential", "backoff"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
-rand = "0.8.3"
-tokio = { version = "1.0", features = ["time"] }
-pin-project = "1.0.5"
+rand = "0.8.5"
+tokio = { version = "1.40", features = ["time"] }
+pin-project = "1.1.5"
 
 [dev-dependencies]
-tokio = { version = "1.0", features = ["full"] }
+tokio = { version = "1.40", features = ["full"] }
+
+[lints.clippy]
+correctness = { level = "deny", priority = -1 }
+suspicious = { level = "deny", priority = 2 }
+style = { level = "deny", priority = 0 }
+complexity = { level = "warn", priority = 3 }
+perf = { level = "deny", priority = 1 }
