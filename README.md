@@ -16,14 +16,14 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tokio-retry2 = "0.4"
+tokio-retry2 = { version = "0.4", features = ["jitter"] }
 ```
 
 ## Examples
 
 ```rust
 use tokio_retry2::Retry;
-use tokio_retry2::strategy::{ExponentialBackoff, jitter};
+use tokio_retry2::strategy::{ExponentialBackoff, jitter, MaxInterval};
 
 async fn action() -> Result<u64, ()> {
     // do some real-world stuff here...
@@ -34,6 +34,7 @@ async fn action() -> Result<u64, ()> {
 async fn main() -> Result<(), ()> {
     let retry_strategy = ExponentialBackoff::from_millis(10)
         .map(jitter) // add jitter to delays
+        .max_interval(10000) // set max interval to 10 seconds
         .take(3);    // limit to 3 retries
 
     let result = Retry::spawn(retry_strategy, action).await?;

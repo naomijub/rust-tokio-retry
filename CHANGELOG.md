@@ -7,3 +7,4 @@
 - Applies const to functions that can be const.
 - Adds linting defaults.
 - Optional jitter from @fuzzbuck PR [#26](https://github.com/srijs/rust-tokio-retry/pull/26)
+- Implements max_interval from @pzmarzly PR [#27](https://github.com/srijs/rust-tokio-retry/pull/27)
