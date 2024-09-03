@@ -1,13 +1,14 @@
-# tokio-retry
+# tokio-retry2
+
+Forked from https://github.com/srijs/rust-tokio-retry to keep it up-to-date
 
 Extensible, asynchronous retry behaviours for the ecosystem of [tokio](https://tokio.rs/) libraries.
 
-[![Build Status](https://travis-ci.org/srijs/rust-tokio-retry.svg?branch=master)](https://travis-ci.org/srijs/rust-tokio-retry)
-[![crates](http://meritbadge.herokuapp.com/tokio-retry)](https://crates.io/crates/tokio-retry)
-[![dependency status](https://deps.rs/repo/github/srijs/rust-tokio-retry/status.svg)](https://deps.rs/repo/github/srijs/rust-tokio-retry)
+[![crates](http://meritbadge.herokuapp.com/tokio-retry2)](https://crates.io/crates/tokio-retry2)
+[![dependency status](https://deps.rs/repo/github/naomijub/tokio-retry2/status.svg)](https://deps.rs/repo/github/namijub/tokio-retry)
 
 
-[Documentation](https://docs.rs/tokio-retry)
+[Documentation](https://docs.rs/tokio-retry2)
 
 ## Installation
 
@@ -21,8 +22,8 @@ tokio-retry = "0.4"
 ## Examples
 
 ```rust
-use tokio_retry::Retry;
-use tokio_retry::strategy::{ExponentialBackoff, jitter};
+use tokio_retry2::Retry;
+use tokio_retry2::strategy::{ExponentialBackoff, jitter};
 
 async fn action() -> Result<u64, ()> {
     // do some real-world stuff here...

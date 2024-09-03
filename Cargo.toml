@@ -1,12 +1,12 @@
 [package]
-name = "tokio-retry"
+name = "tokio-retry2"
 version = "0.4.0"
-authors = ["Sam Rijs <srijs@airpost.net>"]
+authors = ["Julia Naomi <jnboeira@outlook.com>","Sam Rijs <srijs@airpost.net>"]
 description = "Extensible, asynchronous retry behaviours for futures/tokio"
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/srijs/rust-tokio-retry"
-documentation = "https://docs.rs/tokio-retry"
+repository = "https://github.com/naomijub/tokio-retry"
+documentation = "https://docs.rs/tokio-retry2"
 keywords = ["futures", "tokio", "retry", "exponential", "backoff"]
 edition = "2021"
 
