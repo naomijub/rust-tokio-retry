@@ -19,7 +19,7 @@ jobs:
     - name: Build
       run: cargo build
     - name: Tests
-      run: cargo test --verbose
+      run: cargo test --all-features
 
 # Run cargo clippy -- -D warnings
   clippy_check:
@@ -44,7 +44,7 @@ jobs:
         with:
           components: clippy
       - name: Run clippy
-        run: cargo clippy -- -W clippy::all -D warnings
+        run: cargo clippy --all-features -- -W clippy::all -D warnings
 
   # Run cargo fmt --all -- --check
   format:

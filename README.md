@@ -1,6 +1,6 @@
 # tokio-retry2
 
-Forked from https://github.com/srijs/rust-tokio-retry to keep it up-to-date
+Forked from https://github.com/srijs/rust-tokio-retry2 to keep it up-to-date
 
 Extensible, asynchronous retry behaviours for the ecosystem of [tokio](https://tokio.rs/) libraries.
 
@@ -16,7 +16,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tokio-retry = "0.4"
+tokio-retry2 = "0.4"
 ```
 
 ## Examples

@@ -6,3 +6,4 @@
 - Bimonthly runs CI checking for outdated dependencies.
 - Applies const to functions that can be const.
 - Adds linting defaults.
+- Optional jitter from @fuzzbuck PR [#26](https://github.com/srijs/rust-tokio-retry/pull/26)

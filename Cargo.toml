@@ -10,8 +10,11 @@ documentation = "https://docs.rs/tokio-retry2"
 keywords = ["futures", "tokio", "retry", "exponential", "backoff"]
 edition = "2021"
 
+[features]
+jitter = ["rand"]
+
 [dependencies]
-rand = "0.8.5"
+rand = { version = "0.8.5", optional = true }
 tokio = { version = "1.40", features = ["time"] }
 pin-project = "1.1.5"
 
