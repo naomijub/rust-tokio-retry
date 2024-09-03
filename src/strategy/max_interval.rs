@@ -6,7 +6,20 @@ use std::time::Instant;
 pub trait MaxInterval: Iterator<Item = Duration> {
     /// Applies a max_interval for a strategy. In `max_duration` from now,
     /// the strategy will stop retrying.
-    fn max_interval(self, max_duration: Duration) -> MaxIntervalIterator<Self>
+    fn max_interval(self, max_interval: u64) -> MaxIntervalIterator<Self>
+    where
+        Self: Sized,
+    {
+        MaxIntervalIterator {
+            iter: self,
+            start: Instant::now(),
+            max_duration: Duration::from_millis(max_interval),
+        }
+    }
+
+    /// Applies a max_duration for a strategy. In `max_duration` from now,
+    /// the strategy will stop retrying.
+    fn max_duration(self, max_duration: Duration) -> MaxIntervalIterator<Self>
     where
         Self: Sized,
     {
@@ -49,7 +62,17 @@ mod tests {
 
     #[tokio::test]
     async fn returns_none_after_max_interval_passes() {
-        let mut s = FixedInterval::from_millis(10).max_interval(Duration::from_millis(50));
+        let mut s = FixedInterval::from_millis(10).max_interval(50);
+        assert_eq!(s.next(), Some(Duration::from_millis(10)));
+        tokio::time::sleep(Duration::from_millis(15)).await;
+        assert_eq!(s.next(), Some(Duration::from_millis(10)));
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        assert_eq!(s.next(), None);
+    }
+
+    #[tokio::test]
+    async fn returns_none_after_max_duration_passes() {
+        let mut s = FixedInterval::from_millis(10).max_duration(Duration::from_millis(50));
         assert_eq!(s.next(), Some(Duration::from_millis(10)));
         tokio::time::sleep(Duration::from_millis(15)).await;
         assert_eq!(s.next(), Some(Duration::from_millis(10)));
