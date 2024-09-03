@@ -107,8 +107,8 @@ where
         RetryIf {
             strategy: strategy.into_iter(),
             state: RetryState::Running(action.run()),
-            action: action,
-            condition: condition,
+            action,
+            condition,
         }
     }
 

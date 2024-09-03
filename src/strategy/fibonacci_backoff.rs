@@ -1,6 +1,5 @@
 use std::iter::Iterator;
 use std::time::Duration;
-use std::u64::MAX as U64_MAX;
 
 /// A retry strategy driven by the fibonacci series.
 ///
@@ -57,7 +56,7 @@ impl Iterator for FibonacciBackoff {
         let duration = if let Some(duration) = self.curr.checked_mul(self.factor) {
             Duration::from_millis(duration)
         } else {
-            Duration::from_millis(U64_MAX)
+            Duration::from_millis(u64::MAX)
         };
 
         // check if we reached max delay
@@ -72,7 +71,7 @@ impl Iterator for FibonacciBackoff {
             self.next = next_next;
         } else {
             self.curr = self.next;
-            self.next = U64_MAX;
+            self.next = u64::MAX;
         }
 
         Some(duration)
@@ -92,9 +91,9 @@ fn returns_the_fibonacci_series_starting_at_10() {
 
 #[test]
 fn saturates_at_maximum_value() {
-    let mut iter = FibonacciBackoff::from_millis(U64_MAX);
-    assert_eq!(iter.next(), Some(Duration::from_millis(U64_MAX)));
-    assert_eq!(iter.next(), Some(Duration::from_millis(U64_MAX)));
+    let mut iter = FibonacciBackoff::from_millis(u64::MAX);
+    assert_eq!(iter.next(), Some(Duration::from_millis(u64::MAX)));
+    assert_eq!(iter.next(), Some(Duration::from_millis(u64::MAX)));
 }
 
 #[test]
