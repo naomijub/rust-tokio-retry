@@ -23,7 +23,7 @@ pub struct FibonacciBackoff {
 impl FibonacciBackoff {
     /// Constructs a new fibonacci back-off strategy,
     /// given a base duration in milliseconds.
-    pub fn from_millis(millis: u64) -> FibonacciBackoff {
+    pub const fn from_millis(millis: u64) -> FibonacciBackoff {
         FibonacciBackoff {
             curr: millis,
             next: millis,
@@ -37,13 +37,13 @@ impl FibonacciBackoff {
     /// For example, using a factor of `1000` will make each delay in units of seconds.
     ///
     /// Default factor is `1`.
-    pub fn factor(mut self, factor: u64) -> FibonacciBackoff {
+    pub const fn factor(mut self, factor: u64) -> FibonacciBackoff {
         self.factor = factor;
         self
     }
 
     /// Apply a maximum delay. No retry delay will be longer than this `Duration`.
-    pub fn max_delay(mut self, duration: Duration) -> FibonacciBackoff {
+    pub const fn max_delay(mut self, duration: Duration) -> FibonacciBackoff {
         self.max_delay = Some(duration);
         self
     }
