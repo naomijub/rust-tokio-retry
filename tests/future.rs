@@ -3,7 +3,7 @@ use std::iter::Take;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
-use tokio_retry::{Retry, RetryIf};
+use tokio_retry2::{Retry, RetryIf};
 
 #[tokio::test]
 async fn attempts_just_once() {
@@ -22,7 +22,7 @@ async fn attempts_just_once() {
 
 #[tokio::test]
 async fn attempts_until_max_retries_exceeded() {
-    use tokio_retry::strategy::FixedInterval;
+    use tokio_retry2::strategy::FixedInterval;
     let s = FixedInterval::from_millis(100).take(2);
     let counter = Arc::new(AtomicUsize::new(0));
     let cloned_counter = counter.clone();
@@ -38,7 +38,7 @@ async fn attempts_until_max_retries_exceeded() {
 
 #[tokio::test]
 async fn attempts_until_success() {
-    use tokio_retry::strategy::FixedInterval;
+    use tokio_retry2::strategy::FixedInterval;
     let s = FixedInterval::from_millis(100);
     let counter = Arc::new(AtomicUsize::new(0));
     let cloned_counter = counter.clone();
@@ -58,7 +58,7 @@ async fn attempts_until_success() {
 
 #[tokio::test]
 async fn compatible_with_tokio_core() {
-    use tokio_retry::strategy::FixedInterval;
+    use tokio_retry2::strategy::FixedInterval;
     let s = FixedInterval::from_millis(100);
     let counter = Arc::new(AtomicUsize::new(0));
     let cloned_counter = counter.clone();
@@ -78,7 +78,7 @@ async fn compatible_with_tokio_core() {
 
 #[tokio::test]
 async fn attempts_retry_only_if_given_condition_is_true() {
-    use tokio_retry::strategy::FixedInterval;
+    use tokio_retry2::strategy::FixedInterval;
     let s = FixedInterval::from_millis(100).take(5);
     let counter = Arc::new(AtomicUsize::new(0));
     let cloned_counter = counter.clone();
