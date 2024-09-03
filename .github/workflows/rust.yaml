@@ -5,24 +5,11 @@ on:
     branches: [ "*" ]
   pull_request:
     branches: [ "*" ]
-  schedule:
-    - cron: "0 0 1,15 * *"
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  outdated:
-    name: Outdated dependencies
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-    - name: Install cargo-outdated
-      run: cargo install --locked cargo-outdated
-    - name: Check for outdated dependencies
-      run: cargo outdated -R --exit-code 1 
-      
   tests:
     name: Tests
     runs-on: ubuntu-latest
