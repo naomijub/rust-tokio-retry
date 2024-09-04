@@ -159,11 +159,7 @@ where
         cx: &mut Context,
     ) -> Result<Poll<Result<A::Item, A::Error>>, A::Error> {
         match self.as_mut().project().strategy.next() {
-            None => {
-                let duration = self.as_ref().project_ref().duration.clone();
-                self.as_mut().project().notify.notify(&err, duration);
-                Err(err)
-            }
+            None => Err(err),
             Some(duration) => {
                 *self.as_mut().project().duration += duration;
                 let deadline = Instant::now() + duration;
