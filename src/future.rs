@@ -48,7 +48,7 @@ where
     A: Action,
 {
     #[pin]
-    retry_if: RetryIf<I, A, fn(&A::Error) -> bool, fn(&A::Error, Duration)>,
+    retry_if: RetryIf<I, A, fn(&A::Error) -> bool, fn(&A::Error, std::time::Duration)>,
 }
 
 impl<I, A> Retry<I, A>
@@ -65,7 +65,7 @@ where
                 strategy,
                 action,
                 (|_| true) as fn(&A::Error) -> bool,
-                (|_, _| {}) as fn(&A::Error, Duration),
+                (|_, _| {}) as fn(&A::Error, std::time::Duration),
             ),
         }
     }
@@ -73,7 +73,7 @@ where
     pub fn spawn_notify<T: IntoIterator<IntoIter = I, Item = Duration>>(
         strategy: T,
         action: A,
-        notify: fn(&A::Error, Duration),
+        notify: fn(&A::Error, std::time::Duration),
     ) -> Retry<I, A> {
         Retry {
             retry_if: RetryIf::spawn(
@@ -194,6 +194,8 @@ where
                 Poll::Pending => Poll::Pending,
                 Poll::Ready(Err(err)) => {
                     if self.as_mut().project().condition.should_retry(&err) {
+                        let duration = self.as_ref().project_ref().duration.clone();
+                        self.as_mut().project().notify.notify(&err, duration);
                         match self.retry(err, cx) {
                             Ok(poll) => poll,
                             Err(err) => Poll::Ready(Err(err)),

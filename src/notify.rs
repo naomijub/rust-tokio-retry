@@ -1,4 +1,4 @@
-use tokio::time::Duration;
+use std::time::Duration;
 
 pub trait Notify<E> {
     fn notify(&mut self, err: &E, duration: Duration);
