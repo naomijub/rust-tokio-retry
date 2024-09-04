@@ -9,6 +9,8 @@ use std::task::{Context, Poll};
 use pin_project::pin_project;
 use tokio::time::{sleep_until, Duration, Instant, Sleep};
 
+use crate::notify::Notify;
+
 use super::action::Action;
 use super::condition::Condition;
 
@@ -46,7 +48,7 @@ where
     A: Action,
 {
     #[pin]
-    retry_if: RetryIf<I, A, fn(&A::Error) -> bool>,
+    retry_if: RetryIf<I, A, fn(&A::Error) -> bool, fn(&A::Error, Duration)>,
 }
 
 impl<I, A> Retry<I, A>
@@ -59,7 +61,27 @@ where
         action: A,
     ) -> Retry<I, A> {
         Retry {
-            retry_if: RetryIf::spawn(strategy, action, (|_| true) as fn(&A::Error) -> bool),
+            retry_if: RetryIf::spawn(
+                strategy,
+                action,
+                (|_| true) as fn(&A::Error) -> bool,
+                (|_, _| {}) as fn(&A::Error, Duration),
+            ),
+        }
+    }
+
+    pub fn spawn_notify<T: IntoIterator<IntoIter = I, Item = Duration>>(
+        strategy: T,
+        action: A,
+        notify: fn(&A::Error, Duration),
+    ) -> Retry<I, A> {
+        Retry {
+            retry_if: RetryIf::spawn(
+                strategy,
+                action,
+                (|_| true) as fn(&A::Error) -> bool,
+                notify,
+            ),
         }
     }
 }
@@ -80,35 +102,42 @@ where
 /// Future that drives multiple attempts at an action via a retry strategy. Retries are only attempted if
 /// the `Error` returned by the future satisfies a given condition.
 #[pin_project]
-pub struct RetryIf<I, A, C>
+pub struct RetryIf<I, A, C, N>
 where
     I: Iterator<Item = Duration>,
     A: Action,
     C: Condition<A::Error>,
+    N: Notify<A::Error>,
 {
     strategy: I,
     #[pin]
     state: RetryState<A>,
     action: A,
     condition: C,
+    duration: Duration,
+    notify: N,
 }
 
-impl<I, A, C> RetryIf<I, A, C>
+impl<I, A, C, N> RetryIf<I, A, C, N>
 where
     I: Iterator<Item = Duration>,
     A: Action,
     C: Condition<A::Error>,
+    N: Notify<A::Error>,
 {
     pub fn spawn<T: IntoIterator<IntoIter = I, Item = Duration>>(
         strategy: T,
         mut action: A,
         condition: C,
-    ) -> RetryIf<I, A, C> {
+        notify: N,
+    ) -> RetryIf<I, A, C, N> {
         RetryIf {
             strategy: strategy.into_iter(),
             state: RetryState::Running(action.run()),
             action,
             condition,
+            duration: Duration::from_millis(0),
+            notify,
         }
     }
 
@@ -130,8 +159,13 @@ where
         cx: &mut Context,
     ) -> Result<Poll<Result<A::Item, A::Error>>, A::Error> {
         match self.as_mut().project().strategy.next() {
-            None => Err(err),
+            None => {
+                let duration = self.as_ref().project_ref().duration.clone();
+                self.as_mut().project().notify.notify(&err, duration);
+                Err(err)
+            }
             Some(duration) => {
+                *self.as_mut().project().duration += duration;
                 let deadline = Instant::now() + duration;
                 let future = sleep_until(deadline);
                 self.as_mut()
@@ -144,11 +178,12 @@ where
     }
 }
 
-impl<I, A, C> Future for RetryIf<I, A, C>
+impl<I, A, C, N> Future for RetryIf<I, A, C, N>
 where
     I: Iterator<Item = Duration>,
     A: Action,
     C: Condition<A::Error>,
+    N: Notify<A::Error>,
 {
     type Output = Result<A::Item, A::Error>;
 

@@ -1,5 +1,5 @@
-use std::time::Duration;
 use std::time::Instant;
+use tokio::time::Duration;
 
 /// Wraps a strategy, applying `max_interval``, after which strategy will
 /// stop retrying.

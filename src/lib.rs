@@ -68,6 +68,7 @@
 mod action;
 mod condition;
 mod future;
+mod notify;
 /// Assorted retry strategies including fixed interval and exponential back-off.
 pub mod strategy;
 

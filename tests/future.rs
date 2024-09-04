@@ -2,6 +2,7 @@ use std::future;
 use std::iter::Take;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
 
 use tokio_retry2::{Retry, RetryIf};
 
@@ -82,14 +83,17 @@ async fn attempts_retry_only_if_given_condition_is_true() {
     let s = FixedInterval::from_millis(100).take(5);
     let counter = Arc::new(AtomicUsize::new(0));
     let cloned_counter = counter.clone();
-    let future: RetryIf<Take<FixedInterval>, _, fn(&usize) -> _> = RetryIf::spawn(
-        s,
-        move || {
-            let previous = cloned_counter.fetch_add(1, Ordering::SeqCst);
-            future::ready(Err::<(), usize>(previous + 1))
-        },
-        |e: &usize| *e < 3,
-    );
+    #[allow(clippy::complexity)]
+    let future: RetryIf<Take<FixedInterval>, _, fn(&usize) -> _, fn(&usize, Duration) -> _> =
+        RetryIf::spawn(
+            s,
+            move || {
+                let previous = cloned_counter.fetch_add(1, Ordering::SeqCst);
+                future::ready(Err::<(), usize>(previous + 1))
+            },
+            |e: &usize| *e < 3,
+            |_e: &usize, _d: Duration| {},
+        );
     let res = future.await;
 
     assert_eq!(res, Err(3));
