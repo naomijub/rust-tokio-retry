@@ -25,10 +25,13 @@
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), ()> {
 //! let retry_strategy = ExponentialBackoff::from_millis(10)
-//!     .max_interval(10000) // set max interval to 10 seconds
+//!     .factor(1) // multiplication factor applied to deplay
+//!     .max_delay_millis(100) // set max delay between retries to 500ms
+//!     .max_interval(1000) // set max interval to 1 second for all retries
 //!     .take(3);    // limit to 3 retries
 //!
 //! let result = Retry::spawn(retry_strategy, action).await?;
+
 //! # Ok(())
 //! # }
 //! ```

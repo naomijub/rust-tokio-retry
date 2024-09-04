@@ -13,7 +13,7 @@ use std::time::Duration;
 /// for more details.
 #[derive(Debug, Clone)]
 pub struct FibonacciBackoff {
-    curr: u64,
+    current: u64,
     next: u64,
     factor: u64,
     max_delay: Option<Duration>,
@@ -24,7 +24,7 @@ impl FibonacciBackoff {
     /// given a base duration in milliseconds.
     pub const fn from_millis(millis: u64) -> FibonacciBackoff {
         FibonacciBackoff {
-            curr: millis,
+            current: millis,
             next: millis,
             factor: 1u64,
             max_delay: None,
@@ -46,6 +46,12 @@ impl FibonacciBackoff {
         self.max_delay = Some(duration);
         self
     }
+
+    /// Apply a maximum delay. No retry delay will be longer than this `Duration::from_millis`.
+    pub const fn max_delay_millis(mut self, duration: u64) -> FibonacciBackoff {
+        self.max_delay = Some(Duration::from_millis(duration));
+        self
+    }
 }
 
 impl Iterator for FibonacciBackoff {
@@ -53,7 +59,7 @@ impl Iterator for FibonacciBackoff {
 
     fn next(&mut self) -> Option<Duration> {
         // set delay duration by applying factor
-        let duration = if let Some(duration) = self.curr.checked_mul(self.factor) {
+        let duration = if let Some(duration) = self.current.checked_mul(self.factor) {
             Duration::from_millis(duration)
         } else {
             Duration::from_millis(u64::MAX)
@@ -66,11 +72,11 @@ impl Iterator for FibonacciBackoff {
             }
         }
 
-        if let Some(next_next) = self.curr.checked_add(self.next) {
-            self.curr = self.next;
+        if let Some(next_next) = self.current.checked_add(self.next) {
+            self.current = self.next;
             self.next = next_next;
         } else {
-            self.curr = self.next;
+            self.current = self.next;
             self.next = u64::MAX;
         }
 

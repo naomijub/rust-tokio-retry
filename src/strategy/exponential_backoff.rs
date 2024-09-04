@@ -18,7 +18,7 @@ impl ExponentialBackoff {
     ///
     /// The resulting duration is calculated by taking the base to the `n`-th power,
     /// where `n` denotes the number of past attempts.
-    pub const fn from_millis(base: u64) -> ExponentialBackoff {
+    pub const fn from_millis(base: u64) -> Self {
         ExponentialBackoff {
             current: base,
             base,
@@ -40,6 +40,12 @@ impl ExponentialBackoff {
     /// Apply a maximum delay. No retry delay will be longer than this `Duration`.
     pub const fn max_delay(mut self, duration: Duration) -> ExponentialBackoff {
         self.max_delay = Some(duration);
+        self
+    }
+
+    /// Apply a maximum delay. No retry delay will be longer than this `Duration::from_millis`.
+    pub const fn max_delay_millis(mut self, duration: u64) -> ExponentialBackoff {
+        self.max_delay = Some(Duration::from_millis(duration));
         self
     }
 }
