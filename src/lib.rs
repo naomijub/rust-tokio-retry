@@ -53,8 +53,8 @@
 //! use tokio_retry2::strategy::{ExponentialBackoff, jitter, MaxInterval};
 //!
 //! let retry_strategy = ExponentialBackoff::from_millis(10)
-//!    .map(jitter) // add jitter to the retry interval
 //!    .max_interval(10000) // set max interval to 10 seconds
+//!    .map(jitter) // add jitter to the retry interval
 //!    .take(3);    // limit to 3 retries
 //!````
 //!
@@ -68,6 +68,7 @@
 mod action;
 mod condition;
 mod future;
+mod notify;
 /// Assorted retry strategies including fixed interval and exponential back-off.
 pub mod strategy;
 

@@ -2,6 +2,7 @@ use std::future;
 use std::iter::Take;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
 
 use tokio_retry2::{Retry, RetryIf};
 
@@ -82,16 +83,50 @@ async fn attempts_retry_only_if_given_condition_is_true() {
     let s = FixedInterval::from_millis(100).take(5);
     let counter = Arc::new(AtomicUsize::new(0));
     let cloned_counter = counter.clone();
-    let future: RetryIf<Take<FixedInterval>, _, fn(&usize) -> _> = RetryIf::spawn(
-        s,
-        move || {
-            let previous = cloned_counter.fetch_add(1, Ordering::SeqCst);
-            future::ready(Err::<(), usize>(previous + 1))
-        },
-        |e: &usize| *e < 3,
-    );
+    #[allow(clippy::complexity)]
+    let future: RetryIf<Take<FixedInterval>, _, fn(&usize) -> _, fn(&usize, Duration) -> _> =
+        RetryIf::spawn(
+            s,
+            move || {
+                let previous = cloned_counter.fetch_add(1, Ordering::SeqCst);
+                future::ready(Err::<(), usize>(previous + 1))
+            },
+            |e: &usize| *e < 3,
+            |e: &usize, d: Duration| {
+                assert!(e == &1 || e == &2);
+                assert!(d == Duration::from_millis(0) || d == Duration::from_millis(100));
+            },
+        );
     let res = future.await;
 
     assert_eq!(res, Err(3));
     assert_eq!(counter.load(Ordering::SeqCst), 3);
+}
+
+#[tokio::test]
+async fn notify_retry() {
+    use tokio_retry2::strategy::FixedInterval;
+    let s = FixedInterval::from_millis(100);
+    let counter = Arc::new(AtomicUsize::new(0));
+    let cloned_counter = counter.clone();
+    let future = Retry::spawn_notify(
+        s,
+        move || {
+            let previous = cloned_counter.fetch_add(1, Ordering::SeqCst);
+            if previous < 1 {
+                future::ready(Err::<(), u64>(42))
+            } else {
+                future::ready(Ok::<(), u64>(()))
+            }
+        },
+        message,
+    );
+    let res = future.await;
+
+    assert_eq!(res, Ok(()));
+}
+
+fn message(err: &u64, duration: Duration) {
+    let msg = format!("err: {}, duration: {:?}", err, duration);
+    assert_eq!(msg, "err: 42, duration: 0ns");
 }
