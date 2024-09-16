@@ -4,6 +4,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
+use tokio_retry2::strategy::ExponentialBackoff;
 use tokio_retry2::{Retry, RetryError, RetryIf};
 
 #[tokio::test]
@@ -126,6 +127,21 @@ async fn notify_retry() {
     let res = future.await;
 
     assert_eq!(res, Ok(()));
+}
+
+#[tokio::test]
+async fn doesnt_attempt_on_permanent() {
+    let retry_strategy = ExponentialBackoff::from_millis(10).factor(1).take(3);
+    let counter = Arc::new(AtomicUsize::new(0));
+    let cloned_counter = counter.clone();
+    let future = Retry::spawn(retry_strategy, move || {
+        cloned_counter.fetch_add(1, Ordering::SeqCst);
+        future::ready(RetryError::to_permanent::<()>(42))
+    });
+    let res = future.await;
+
+    assert_eq!(res, Err(42));
+    assert_eq!(counter.load(Ordering::SeqCst), 1);
 }
 
 fn message(err: &u64, duration: Duration) {
