@@ -4,7 +4,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
-use tokio_retry2::{Retry, RetryIf};
+use tokio_retry2::strategy::ExponentialBackoff;
+use tokio_retry2::{Retry, RetryError, RetryIf};
 
 #[tokio::test]
 async fn attempts_just_once() {
@@ -13,7 +14,7 @@ async fn attempts_just_once() {
     let cloned_counter = counter.clone();
     let future = Retry::spawn(empty(), move || {
         cloned_counter.fetch_add(1, Ordering::SeqCst);
-        future::ready(Err::<(), u64>(42))
+        future::ready(Err::<(), RetryError<u64>>(RetryError::transient(42)))
     });
     let res = future.await;
 
@@ -29,7 +30,7 @@ async fn attempts_until_max_retries_exceeded() {
     let cloned_counter = counter.clone();
     let future = Retry::spawn(s, move || {
         cloned_counter.fetch_add(1, Ordering::SeqCst);
-        future::ready(Err::<(), u64>(42))
+        future::ready(Err::<(), RetryError<u64>>(RetryError::transient(42)))
     });
     let res = future.await;
 
@@ -46,9 +47,9 @@ async fn attempts_until_success() {
     let future = Retry::spawn(s, move || {
         let previous = cloned_counter.fetch_add(1, Ordering::SeqCst);
         if previous < 3 {
-            future::ready(Err::<(), u64>(42))
+            future::ready(Err::<(), RetryError<u64>>(RetryError::transient(42)))
         } else {
-            future::ready(Ok::<(), u64>(()))
+            future::ready(Ok::<(), RetryError<u64>>(()))
         }
     });
     let res = future.await;
@@ -66,9 +67,9 @@ async fn compatible_with_tokio_core() {
     let future = Retry::spawn(s, move || {
         let previous = cloned_counter.fetch_add(1, Ordering::SeqCst);
         if previous < 3 {
-            future::ready(Err::<(), u64>(42))
+            future::ready(Err::<(), RetryError<u64>>(RetryError::transient(42)))
         } else {
-            future::ready(Ok::<(), u64>(()))
+            future::ready(Ok::<(), RetryError<u64>>(()))
         }
     });
     let res = future.await;
@@ -89,7 +90,9 @@ async fn attempts_retry_only_if_given_condition_is_true() {
             s,
             move || {
                 let previous = cloned_counter.fetch_add(1, Ordering::SeqCst);
-                future::ready(Err::<(), usize>(previous + 1))
+                future::ready(Err::<(), RetryError<usize>>(RetryError::transient(
+                    previous + 1,
+                )))
             },
             |e: &usize| *e < 3,
             |e: &usize, d: Duration| {
@@ -114,9 +117,9 @@ async fn notify_retry() {
         move || {
             let previous = cloned_counter.fetch_add(1, Ordering::SeqCst);
             if previous < 1 {
-                future::ready(Err::<(), u64>(42))
+                future::ready(Err::<(), RetryError<u64>>(RetryError::transient(42)))
             } else {
-                future::ready(Ok::<(), u64>(()))
+                future::ready(Ok::<(), RetryError<u64>>(()))
             }
         },
         message,
@@ -124,6 +127,21 @@ async fn notify_retry() {
     let res = future.await;
 
     assert_eq!(res, Ok(()));
+}
+
+#[tokio::test]
+async fn doesnt_attempt_on_permanent() {
+    let retry_strategy = ExponentialBackoff::from_millis(10).factor(1).take(3);
+    let counter = Arc::new(AtomicUsize::new(0));
+    let cloned_counter = counter.clone();
+    let future = Retry::spawn(retry_strategy, move || {
+        cloned_counter.fetch_add(1, Ordering::SeqCst);
+        future::ready(RetryError::to_permanent::<()>(42))
+    });
+    let res = future.await;
+
+    assert_eq!(res, Err(42));
+    assert_eq!(counter.load(Ordering::SeqCst), 1);
 }
 
 fn message(err: &u64, duration: Duration) {

@@ -4,9 +4,9 @@ Forked from https://github.com/srijs/rust-tokio-retry2 to keep it up-to-date
 
 Extensible, asynchronous retry behaviours for the ecosystem of [tokio](https://tokio.rs/) libraries.
 
-[![crates.io](https://img.shields.io/crates/v/tokio-retry2.svg)](https://crates.io/crates/tokio-retry2)
-[![dependency status](https://deps.rs/repo/github/naomijub/tokio-retry/status.svg)](https://deps.rs/repo/github/naomijub/tokio-retry)
-
+[![crates](http://meritbadge.herokuapp.com/tokio-retry2)](https://crates.io/crates/tokio-retry2)
+[![dependency status](https://deps.rs/repo/github/naomijub/tokio-retry2/status.svg)](https://deps.rs/repo/github/namijub/tokio-retry)
+[![codecov](https://codecov.io/gh/naomijub/tokio-retry/branch/main/graph/badge.svg?token=4VMVTZTN8A)](https://codecov.io/gh/naomijub/tokio-retry)
 
 [Documentation](https://docs.rs/tokio-retry2)
 
@@ -16,18 +16,18 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tokio-retry2 = { version = "0.4", features = ["jitter"] }
+tokio-retry2 = { version = "0.5", features = ["jitter"] }
 ```
 
 ## Examples
 
 ```rust
-use tokio_retry2::Retry;
+use tokio_retry2::{Retry, RetryError};
 use tokio_retry2::strategy::{ExponentialBackoff, jitter, MaxInterval};
 
 async fn action() -> Result<u64, ()> {
     // do some real-world stuff here...
-    Err(())
+    RetryError::to_transient(())
 }
 
 #[tokio::main]
@@ -48,12 +48,12 @@ async fn main() -> Result<(), ()> {
 Or, to retry with a notification function:
 
 ```rust
-use tokio_retry2::Retry;
+use tokio_retry2::{Retry, RetryError};
 use tokio_retry2::strategy::{ExponentialBackoff, jitter, MaxInterval};
 
 async fn action() -> Result<u64, std::io::Error> {
     // do some real-world stuff here...
-    Err(())
+    RetryError::to_permanent(()) // Early exits on this error
 }
 
 fn notify(err: &std::io::Error, duration: std::time::Duration) {
