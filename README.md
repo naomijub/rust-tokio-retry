@@ -22,12 +22,12 @@ tokio-retry2 = { version = "0.5", features = ["jitter"] }
 ## Examples
 
 ```rust
-use tokio_retry2::Retry;
+use tokio_retry2::{Retry, RetryError};
 use tokio_retry2::strategy::{ExponentialBackoff, jitter, MaxInterval};
 
 async fn action() -> Result<u64, ()> {
     // do some real-world stuff here...
-    Err(())
+    RetryError::to_transient(())
 }
 
 #[tokio::main]
@@ -48,12 +48,12 @@ async fn main() -> Result<(), ()> {
 Or, to retry with a notification function:
 
 ```rust
-use tokio_retry2::Retry;
+use tokio_retry2::{Retry, RetryError};
 use tokio_retry2::strategy::{ExponentialBackoff, jitter, MaxInterval};
 
 async fn action() -> Result<u64, std::io::Error> {
     // do some real-world stuff here...
-    Err(())
+    RetryError::to_permanent(()) // Early exits on this error
 }
 
 fn notify(err: &std::io::Error, duration: std::time::Duration) {
