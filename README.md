@@ -6,6 +6,7 @@ Extensible, asynchronous retry behaviours for the ecosystem of [tokio](https://t
 
 [![crates](http://meritbadge.herokuapp.com/tokio-retry2)](https://crates.io/crates/tokio-retry2)
 [![dependency status](https://deps.rs/repo/github/naomijub/tokio-retry2/status.svg)](https://deps.rs/repo/github/namijub/tokio-retry)
+[![codecov](https://codecov.io/gh/naomijub/tokio-retry/branch/main/graph/badge.svg?token=4VMVTZTN8A)](https://codecov.io/gh/naomijub/tokio-retry)
 
 
 [Documentation](https://docs.rs/tokio-retry2)
