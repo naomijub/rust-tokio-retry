@@ -9,6 +9,7 @@ use std::task::{Context, Poll};
 use pin_project::pin_project;
 use tokio::time::{sleep_until, Duration, Instant, Sleep};
 
+use crate::error::Error as RetryError;
 use crate::notify::Notify;
 
 use super::action::Action;
@@ -36,7 +37,7 @@ enum RetryFuturePoll<A>
 where
     A: Action,
 {
-    Running(Poll<Result<A::Item, A::Error>>),
+    Running(Poll<Result<A::Item, RetryError<A::Error>>>),
     Sleeping(Poll<()>),
 }
 
@@ -188,18 +189,21 @@ where
             RetryFuturePoll::Running(poll_result) => match poll_result {
                 Poll::Ready(Ok(ok)) => Poll::Ready(Ok(ok)),
                 Poll::Pending => Poll::Pending,
-                Poll::Ready(Err(err)) => {
-                    if self.as_mut().project().condition.should_retry(&err) {
-                        let duration = self.as_ref().project_ref().duration.clone();
-                        self.as_mut().project().notify.notify(&err, duration);
-                        match self.retry(err, cx) {
-                            Ok(poll) => poll,
-                            Err(err) => Poll::Ready(Err(err)),
+                Poll::Ready(Err(error)) => match error {
+                    RetryError::Permanent(err) => Poll::Ready(Err(err)),
+                    RetryError::Transient { err, retry_after } => {
+                        if self.as_mut().project().condition.should_retry(&err) {
+                            let duration = self.as_ref().project_ref().duration.clone();
+                            self.as_mut().project().notify.notify(&err, duration);
+                            match self.retry(err, cx) {
+                                Ok(poll) => poll,
+                                Err(err) => Poll::Ready(Err(err)),
+                            }
+                        } else {
+                            Poll::Ready(Err(err))
                         }
-                    } else {
-                        Poll::Ready(Err(err))
                     }
-                }
+                },
             },
             RetryFuturePoll::Sleeping(poll_result) => match poll_result {
                 Poll::Pending => Poll::Pending,
