@@ -186,7 +186,7 @@ impl<T, E> From<Result<T, Error<E>>> for RetryResult<T, E> {
 #[cfg(feature = "implicit_results")]
 impl<T, E> From<Result<T, E>> for RetryResult<T, E> {
     fn from(r: Result<T, E>) -> RetryResult<T, E> {
-        r.map_transient().into()
+        r.map_transient_err().into()
     }
 }
 
@@ -225,13 +225,13 @@ impl<T> From<Option<T>> for RetryResult<T, String> {
 }
 
 pub trait MapErr<T, E> {
-    fn map_transient(self) -> Result<T, Error<E>>;
-    fn map_permanent(self) -> Result<T, Error<E>>;
+    fn map_transient_err(self) -> Result<T, Error<E>>;
+    fn map_permanent_err(self) -> Result<T, Error<E>>;
 }
 
 impl<T, E> MapErr<T, E> for Result<T, E> {
     #[inline]
-    fn map_transient(self) -> Result<T, Error<E>> {
+    fn map_transient_err(self) -> Result<T, Error<E>> {
         match self {
             Ok(t) => Ok(t),
             Err(e) => Err(Error::transient(e)),
@@ -239,7 +239,7 @@ impl<T, E> MapErr<T, E> for Result<T, E> {
     }
 
     #[inline]
-    fn map_permanent(self) -> Result<T, Error<E>> {
+    fn map_permanent_err(self) -> Result<T, Error<E>> {
         match self {
             Ok(t) => Ok(t),
             Err(e) => Err(Error::permanent(e)),
@@ -286,13 +286,13 @@ mod test {
 
     #[test]
     fn map_transient_keeps_ok() {
-        let result: Result<i32, Error<()>> = Ok(42).map_transient();
+        let result: Result<i32, Error<()>> = Ok(42).map_transient_err();
         assert_eq!(result, Ok(42));
     }
 
     #[test]
     fn map_transient_maps_err() {
-        let result: Result<(), Error<&str>> = Err("err").map_transient();
+        let result: Result<(), Error<&str>> = Err("err").map_transient_err();
         assert_eq!(
             result,
             Err::<(), Error<&str>>(Error::Transient {
@@ -304,13 +304,13 @@ mod test {
 
     #[test]
     fn map_permanent_keeps_ok() {
-        let result: Result<i32, Error<()>> = Ok(42).map_permanent();
+        let result: Result<i32, Error<()>> = Ok(42).map_permanent_err();
         assert_eq!(result, Ok(42));
     }
 
     #[test]
     fn map_permanent_maps_err() {
-        let result: Result<(), Error<&str>> = Err("err").map_permanent();
+        let result: Result<(), Error<&str>> = Err("err").map_permanent_err();
         assert_eq!(result, Err(Error::Permanent("err")));
     }
 
