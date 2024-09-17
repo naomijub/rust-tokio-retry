@@ -1,12 +1,13 @@
 # Changelog
 
-## Version 0.5.2 @ [#7](https://github.com/naomijub/tokio-retry/pull/7)
+## Version 0.5.2 @ [#8](https://github.com/naomijub/tokio-retry/pull/8)
 
 - Add implicit conversion from `Result<T, E>` to `RetryResult<T, E>` a type enabled by feature to handle implicit type conversions from `E` to `RetryError<E>::Transient`. Same for `Option<T>`.
 - Adds `PartialEq` between  `Result<T, RetryError<E>>` and `RetryResult<T, E>` for `T` and `E` bounded by `PartialEq`.
 - Cargo update.
 
-## Version 0.5.1 @ [#6](https://github.com/naomijub/tokio-retry/pull/6)
+## Version 0.5.1 @ [#7](https://github.com/naomijub/tokio-retry/pull/7)
+> [#6](https://github.com/naomijub/tokio-retry/pull/6)
 
 - Adds `MapErr` trait to `RetryError`, that facilitates handling `map_err` in `Result` types, transforming them into `Result<_, RetryError<_>>`
 
