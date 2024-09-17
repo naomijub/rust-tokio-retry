@@ -3,6 +3,9 @@ use std::fmt;
 
 use std::time::Duration;
 
+const TRANSIENT_ERROR: &str = "transient error";
+const PERMANENT_ERROR: &str = "permanent error";
+
 /// `Error` is the error value in an actions's retry result.
 ///
 /// Based on the two possible values, the operation
@@ -107,8 +110,8 @@ where
 {
     fn description(&self) -> &str {
         match *self {
-            Error::Permanent(_) => "permanent error",
-            Error::Transient { .. } => "transient error",
+            Error::Permanent(_) => PERMANENT_ERROR,
+            Error::Transient { .. } => TRANSIENT_ERROR,
         }
     }
 
@@ -159,6 +162,64 @@ where
                 },
             ) => self_err == other_err && self_retry_after == other_retry_after,
             _ => false,
+        }
+    }
+}
+
+#[cfg(feature = "implicit_results")]
+#[derive(Debug, PartialEq)]
+pub enum RetryResult<T, E> {
+    Ok(T),
+    Err(Error<E>),
+}
+
+#[cfg(feature = "implicit_results")]
+impl<T, E> From<Result<T, Error<E>>> for RetryResult<T, E> {
+    fn from(r: Result<T, Error<E>>) -> RetryResult<T, E> {
+        match r {
+            Ok(t) => Self::Ok(t),
+            Err(e) => Self::Err(e),
+        }
+    }
+}
+
+#[cfg(feature = "implicit_results")]
+impl<T, E> From<Result<T, E>> for RetryResult<T, E> {
+    fn from(r: Result<T, E>) -> RetryResult<T, E> {
+        r.map_transient().into()
+    }
+}
+
+#[cfg(feature = "implicit_results")]
+impl<T, E> From<RetryResult<T, E>> for Result<T, Error<E>> {
+    fn from(value: RetryResult<T, E>) -> Self {
+        match value {
+            RetryResult::Ok(t) => Ok(t),
+            RetryResult::Err(error) => Err(error),
+        }
+    }
+}
+
+#[cfg(feature = "implicit_results")]
+impl<T: PartialEq, E: PartialEq> PartialEq<RetryResult<T, E>> for Result<T, Error<E>> {
+    fn eq(&self, other: &RetryResult<T, E>) -> bool {
+        match (self, other) {
+            (Ok(self_t), RetryResult::Ok(other_t)) => self_t == other_t,
+            (Err(self_err), RetryResult::Err(other_err)) => self_err == other_err,
+            _ => false,
+        }
+    }
+}
+
+#[cfg(feature = "implicit_results")]
+impl<T> From<Option<T>> for RetryResult<T, String> {
+    fn from(r: Option<T>) -> RetryResult<T, String> {
+        match r {
+            Some(t) => Self::Ok(t),
+            None => Self::Err(Error::Transient {
+                err: String::from(TRANSIENT_ERROR),
+                retry_after: None,
+            }),
         }
     }
 }
@@ -255,24 +316,24 @@ mod test {
 
     #[test]
     fn fmt_permanent_error() {
-        let error = Error::Permanent("permanent error");
+        let error = Error::Permanent(PERMANENT_ERROR);
         let formatted = format!("{}", error);
-        assert_eq!(formatted, "permanent error");
+        assert_eq!(formatted, PERMANENT_ERROR);
     }
 
     #[test]
     fn fmt_transient_error() {
         let error = Error::Transient {
-            err: "transient error",
+            err: TRANSIENT_ERROR,
             retry_after: None,
         };
         let formatted = format!("{}", error);
-        assert_eq!(formatted, "transient error");
+        assert_eq!(formatted, TRANSIENT_ERROR);
     }
 
     #[test]
     fn debug_permanent_error() {
-        let error = Error::Permanent("permanent error");
+        let error = Error::Permanent(PERMANENT_ERROR);
         let debug = format!("{:?}", error);
         assert_eq!(debug, "Permanent(\"permanent error\")");
     }
@@ -280,7 +341,7 @@ mod test {
     #[test]
     fn debug_transient_error() {
         let error = Error::Transient {
-            err: "transient error",
+            err: TRANSIENT_ERROR,
             retry_after: None,
         };
         let debug = format!("{:?}", error);
@@ -289,47 +350,42 @@ mod test {
 
     #[test]
     fn description_permanent_error() {
-        let error = Error::permanent(MyError("permanent error"));
-        assert_eq!(error.description(), "permanent error");
+        let error = Error::permanent(MyError(PERMANENT_ERROR));
+        assert_eq!(error.description(), PERMANENT_ERROR);
     }
 
     #[test]
     fn description_transient_error() {
-        let error = Error::transient(MyError("transient error"));
-        assert_eq!(error.description(), "transient error");
+        let error = Error::transient(MyError(TRANSIENT_ERROR));
+        assert_eq!(error.description(), TRANSIENT_ERROR);
     }
 
     #[test]
     fn source_permanent_error() {
-        let error: Result<(), Error<MyError>> = Error::to_retry_after(
-            MyError("transient error"),
-            std::time::Duration::from_secs(1),
-        );
+        let error: Result<(), Error<MyError>> =
+            Error::to_retry_after(MyError(TRANSIENT_ERROR), std::time::Duration::from_secs(1));
         assert!(error.unwrap_err().source().is_none());
     }
 
     #[test]
     fn source_transient_error() {
-        let error = Error::retry_after(
-            MyError("transient error"),
-            std::time::Duration::from_secs(1),
-        );
+        let error = Error::retry_after(MyError(TRANSIENT_ERROR), std::time::Duration::from_secs(1));
         assert!(error.source().is_none());
     }
 
     #[test]
     fn cause_permanent_error() {
-        let error = Error::permanent(MyError("permanent error"));
+        let error = Error::permanent(MyError(PERMANENT_ERROR));
         assert!(error.cause().is_none());
     }
 
     #[test]
     fn cause_transient_error() {
-        let error = Error::transient(MyError("transient error"));
+        let error = Error::transient(MyError(TRANSIENT_ERROR));
         assert!(error.cause().is_none());
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq)]
     pub struct MyError(pub &'static str);
     impl fmt::Display for MyError {
         fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -348,5 +404,114 @@ mod test {
         fn cause(&self) -> Option<&dyn StdError> {
             self.source()
         }
+    }
+
+    #[test]
+    #[cfg(feature = "implicit_results")]
+    fn from_ok() {
+        let result: Result<i32, ()> = Ok(42);
+        let retry_result: RetryResult<i32, ()> = result.into();
+        assert_eq!(retry_result, Ok::<i32, ()>(42).into());
+    }
+
+    #[test]
+    #[cfg(feature = "implicit_results")]
+    fn from_err_permanent() {
+        let error = Error::Permanent(PERMANENT_ERROR);
+        let result: Result<i32, Error<&str>> = Err(error);
+        let retry_result: RetryResult<i32, &str> = result.into();
+        assert_eq!(retry_result, Err(Error::Permanent(PERMANENT_ERROR)).into());
+    }
+
+    #[test]
+    #[cfg(feature = "implicit_results")]
+    fn from_err_transient() {
+        let error = Error::Transient {
+            err: TRANSIENT_ERROR,
+            retry_after: None,
+        };
+        let result: Result<i32, Error<&str>> = Err(error);
+        let retry_result: RetryResult<i32, &str> = result.into();
+        assert_eq!(
+            retry_result,
+            Err(Error::Transient {
+                err: TRANSIENT_ERROR,
+                retry_after: None
+            })
+            .into()
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "implicit_results")]
+    fn from_result_with_error() {
+        let error = MyError("my error");
+        let result = Err(error);
+        let retry_result: RetryResult<i32, MyError> = result.into();
+        assert_eq!(
+            retry_result,
+            Err(Error::Transient {
+                err: MyError("my error"),
+                retry_after: None
+            })
+            .into()
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "implicit_results")]
+    fn from_result_with_transient_error() {
+        let error = MyError("my transient error");
+        let result = Err(error);
+        let retry_result: RetryResult<i32, MyError> = result.into();
+        assert_eq!(
+            retry_result,
+            Err(Error::Transient {
+                err: MyError("my transient error"),
+                retry_after: None
+            })
+            .into()
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "implicit_results")]
+    fn from_some() {
+        let option = Some(42);
+        let retry_result: RetryResult<i32, String> = option.into();
+        assert_eq!(retry_result, Ok::<i32, String>(42).into());
+    }
+
+    #[test]
+    #[cfg(feature = "implicit_results")]
+    fn from_none() {
+        let option: Option<i32> = None;
+        let retry_result: RetryResult<i32, String> = option.into();
+        assert_eq!(
+            retry_result,
+            Err(Error::Transient {
+                err: String::from(TRANSIENT_ERROR),
+                retry_after: None
+            })
+            .into()
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "implicit_results")]
+    fn partial_eq_on_ok() {
+        let option = Some(42);
+        let retry_result: RetryResult<i32, String> = option.into();
+        let result: Result<i32, Error<String>> = Ok(42);
+        assert_eq!(result, retry_result);
+    }
+
+    #[test]
+    #[cfg(feature = "implicit_results")]
+    fn partial_eq_on_err() {
+        let option = None::<i32>;
+        let retry_result: RetryResult<i32, String> = option.into();
+        let result: Result<i32, Error<String>> = Err(Error::transient(TRANSIENT_ERROR.to_string()));
+        assert_eq!(result, retry_result);
     }
 }
