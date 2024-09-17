@@ -57,7 +57,7 @@ async fn action() -> Result<u64, std::io::Error> {
 }
 
 fn notify(err: &std::io::Error, duration: std::time::Duration) {
-    tracing::info!("Error {err:?} ocurred at {duration:?}");
+    tracing::info!("Error {err:?} occurred at {duration:?}");
 }
 
 #[tokio::main]
