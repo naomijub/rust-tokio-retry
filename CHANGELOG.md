@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.5.1 @ [#31](https://github.com/srijs/rust-tokio-retry/pull/31)
+
+- Adds `MapErr` trait to `RetryError`, that facilitates handling `map_err` in `Result` types, transforming them into `Result<_, RetryError<_>>`
+
 ## Version 0.5.0 @ [#30](https://github.com/srijs/rust-tokio-retry/pull/30)
 
 - Adds `RetryError` type inspired by [`backoff Error`](https://docs.rs/backoff/latest/backoff/enum.Error.html) where user can define Errors as `Transient` and `Permanent` so it is possible to early exit a retry. 
