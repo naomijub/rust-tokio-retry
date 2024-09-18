@@ -1,4 +1,9 @@
 # Changelog
+## Version 0.5.3
+
+- Documentation fix.
+- Fixes Transient duration behavior, overwriting original duration.
+
 
 ## Version 0.5.2 @ [#8](https://github.com/naomijub/tokio-retry/pull/8)
 

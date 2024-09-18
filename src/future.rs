@@ -193,7 +193,8 @@ where
                     RetryError::Permanent(err) => Poll::Ready(Err(err)),
                     RetryError::Transient { err, retry_after } => {
                         if self.as_mut().project().condition.should_retry(&err) {
-                            let duration = self.as_ref().project_ref().duration.clone();
+                            let duration =
+                                retry_after.unwrap_or(self.as_ref().project_ref().duration.clone());
                             self.as_mut().project().notify.notify(&err, duration);
                             match self.retry(err, cx) {
                                 Ok(poll) => poll,

@@ -25,7 +25,7 @@ tokio-retry2 = { version = "0.5", features = ["jitter"] }
 use tokio_retry2::{Retry, RetryError};
 use tokio_retry2::strategy::{ExponentialBackoff, jitter, MaxInterval};
 
-async fn action() -> Result<u64, ()> {
+async fn action() -> Result<u64, RetryError<()>> {
     // do some real-world stuff here...
     RetryError::to_transient(())
 }
@@ -51,7 +51,7 @@ Or, to retry with a notification function:
 use tokio_retry2::{Retry, RetryError};
 use tokio_retry2::strategy::{ExponentialBackoff, jitter, MaxInterval};
 
-async fn action() -> Result<u64, std::io::Error> {
+async fn action() -> Result<u64, RetryError<std::io::Error>> {
     // do some real-world stuff here...
     RetryError::to_permanent(()) // Early exits on this error
 }
@@ -74,3 +74,15 @@ async fn main() -> Result<(), ()> {
     Ok(())
 }
 ```
+
+## Early Exit and Error Handling
+
+Actions must return a `RetryError` that can wrap any other error type. There are 2 `RetryError` error trypes:
+- `Permanent`, which receives an error and brakes the retry loop. It can be constructed manually or with auxiliary functions `RetryError::permanent(e: E)`, that returns a `RetryError::Permanent<E>`, or `RetryError::to_permanent(e: E)`, that returns an `Err(RetryError::Permanent<E>)`.
+- `Transient`, which is the **Default** error for the loop. It has 2 modes:
+    1. `RetryError::transient(e: E)` and `RetryError::to_transient(e: E)`, that return a `RetryError::Transient<E>`, which is an error that triggers the retry strategy.
+    2. `RetryError::retry_after(e: E, duration: std::time::Duration)` and `RetryError::to_retry_after(e: E, duration: std::time::Duration)`, that return a `RetryError::Transient<E>`, which is an error that triggers the retry strategy after the specified duration.
+- Thet is also the trait `MapErr` that possesses 2 auxiliary functions that map the current function Result to `Result<T, RetryError<E>>`:
+    1. `fn map_transient_err(self) -> Result<T, RetryError<E>>;`
+    2. `fn map_permanent_err(self) -> Result<T, RetryError<E>>;`
+- Using the `?` operator on an `Option` type will always propagate a `RetryError::Transient<E>` with no extra duration.
