@@ -37,13 +37,13 @@ impl ExponentialBackoff {
         self
     }
 
-    /// Apply a maximum delay. No retry delay will be longer than this `Duration`.
+    /// Apply a maximum delay. No single retry delay will be longer than this `Duration`.
     pub const fn max_delay(mut self, duration: Duration) -> ExponentialBackoff {
         self.max_delay = Some(duration);
         self
     }
 
-    /// Apply a maximum delay. No retry delay will be longer than this `Duration::from_millis`.
+    /// Apply a maximum delay. No single retry delay will be longer than this `Duration::from_millis`.
     pub const fn max_delay_millis(mut self, duration: u64) -> ExponentialBackoff {
         self.max_delay = Some(Duration::from_millis(duration));
         self

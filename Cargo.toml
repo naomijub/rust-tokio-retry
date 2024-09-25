@@ -1,6 +1,6 @@
 [package]
 name = "tokio-retry2"
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Julia Naomi <jnboeira@outlook.com>","Sam Rijs <srijs@airpost.net>"]
 description = "Extensible, asynchronous retry behaviours for futures/tokio"
 license = "MIT"

@@ -4,8 +4,7 @@ use tokio::time::Duration;
 /// Wraps a strategy, applying `max_interval``, after which strategy will
 /// stop retrying.
 pub trait MaxInterval: Iterator<Item = Duration> {
-    /// Applies a max_interval for a strategy. In `max_duration` from now,
-    /// the strategy will stop retrying.
+    /// Applies a `max_interval` for a strategy. Same as  `max_duration`, but using millis instead of `Duration`.
     fn max_interval(self, max_interval: u64) -> MaxIntervalIterator<Self>
     where
         Self: Sized,
@@ -17,8 +16,9 @@ pub trait MaxInterval: Iterator<Item = Duration> {
         }
     }
 
-    /// Applies a max_duration for a strategy. In `max_duration` from now,
-    /// the strategy will stop retrying.
+    /// Applies a `max_duration` for a strategy. In `max_duration` from now,
+    /// the strategy will stop retrying. If `max_duration` is passed, the strategy
+    /// will stop retrying after `max_duration` is reached.
     fn max_duration(self, max_duration: Duration) -> MaxIntervalIterator<Self>
     where
         Self: Sized,

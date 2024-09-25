@@ -1,4 +1,9 @@
 # Changelog
+
+## Version 0.5.4
+
+- Exports `MaxIntervalIterator` as standard `strategy` struct.
+
 ## Version 0.5.3
 
 - Documentation fix.
