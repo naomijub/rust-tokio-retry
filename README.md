@@ -16,8 +16,12 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tokio-retry2 = { version = "0.5", features = ["jitter"] }
+tokio-retry2 = { version = "0.5", features = ["jitter", "tracing"] }
 ```
+
+### Features:
+- `jitter`: adds jittery duration to the retry. Mechanism to avoid multiple systems retrying at the same time.
+- `tracing`: using `tracing` crate to indicate that a strategy has reached its `max_duration` or `max_delay`.
 
 ## Examples
 

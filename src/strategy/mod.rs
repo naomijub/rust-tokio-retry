@@ -11,4 +11,4 @@ pub use self::fixed_interval::FixedInterval;
 pub use self::max_interval::{MaxInterval, MaxIntervalIterator};
 
 #[cfg(feature = "jitter")]
-pub use self::jitter::jitter;
+pub use self::jitter::{jitter, jitter_range};

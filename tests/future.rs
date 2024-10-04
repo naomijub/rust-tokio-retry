@@ -144,6 +144,36 @@ async fn doesnt_attempt_on_permanent() {
     assert_eq!(counter.load(Ordering::SeqCst), 1);
 }
 
+#[tokio::test]
+async fn notify_retry_after_duration() {
+    let s = tokio_retry2::strategy::FixedInterval::from_millis(100);
+    let counter = Arc::new(AtomicUsize::new(0));
+    let cloned_counter = counter.clone();
+    let future = crate::Retry::spawn_notify(
+        s,
+        move || {
+            let previous = cloned_counter.fetch_add(1, Ordering::SeqCst);
+            if previous < 1 {
+                future::ready(Err::<(), RetryError<u64>>(RetryError::retry_after(
+                    42,
+                    Duration::from_millis(100),
+                )))
+            } else {
+                future::ready(Ok::<(), RetryError<u64>>(()))
+            }
+        },
+        message_100ms,
+    );
+    let res = future.await;
+
+    assert_eq!(res, Ok(()));
+}
+
+fn message_100ms(err: &u64, duration: Duration) {
+    let msg = format!("err: {}, duration: {:?}", err, duration);
+    assert_eq!(msg, "err: 42, duration: 100ms");
+}
+
 fn message(err: &u64, duration: Duration) {
     let msg = format!("err: {}, duration: {:?}", err, duration);
     assert_eq!(msg, "err: 42, duration: 0ns");

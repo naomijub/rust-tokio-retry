@@ -47,6 +47,9 @@ impl<I: Iterator<Item = Duration>> Iterator for MaxIntervalIterator<I> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.start.elapsed() > self.max_duration {
+            #[cfg(feature = "tracing")]
+            tracing::warn!("`max_duration` reached, cancelling retry");
+
             None
         } else {
             self.iter.next()
