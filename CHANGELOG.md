@@ -4,7 +4,8 @@
 
 - Include feature `tracing` to inform when a `max_duration` or `max_delay` has been reached.
 - Fixed bug that `retry_after` duration was not overwriting the strategy duration.
-- `jitter` ranges between 50% and 150% of initial duration
+- `jitter` ranges between 50% and 150% of initial duration.
+- Adds `jitter_range` for custom `map` jitter ranges.
 
 ## Version 0.5.4
 
