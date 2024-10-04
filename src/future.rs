@@ -160,7 +160,11 @@ where
         cx: &mut Context,
     ) -> Result<Poll<Result<A::Item, A::Error>>, A::Error> {
         match self.as_mut().project().strategy.next() {
-            None => Err(err),
+            None => {
+                #[cfg(feature = "tracing")]
+                tracing::warn!("ending retry: strategy reached its limit");
+                Err(err)
+            }
             Some(duration) => {
                 *self.as_mut().project().duration += duration;
                 let deadline = Instant::now() + duration;
@@ -196,6 +200,7 @@ where
                             let duration =
                                 retry_after.unwrap_or(self.as_ref().project_ref().duration.clone());
                             self.as_mut().project().notify.notify(&err, duration);
+                            *self.as_mut().project().duration = duration;
                             match self.retry(err, cx) {
                                 Ok(poll) => poll,
                                 Err(err) => Poll::Ready(Err(err)),

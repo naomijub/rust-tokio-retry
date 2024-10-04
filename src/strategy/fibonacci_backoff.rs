@@ -68,6 +68,8 @@ impl Iterator for FibonacciBackoff {
         // check if we reached max delay
         if let Some(ref max_delay) = self.max_delay {
             if duration > *max_delay {
+                #[cfg(feature = "tracing")]
+                tracing::warn!("`max_delay` for strategy reached");
                 return Some(*max_delay);
             }
         }
@@ -84,49 +86,53 @@ impl Iterator for FibonacciBackoff {
     }
 }
 
-#[test]
-fn returns_the_fibonacci_series_starting_at_10() {
-    let mut iter = FibonacciBackoff::from_millis(10);
-    assert_eq!(iter.next(), Some(Duration::from_millis(10)));
-    assert_eq!(iter.next(), Some(Duration::from_millis(10)));
-    assert_eq!(iter.next(), Some(Duration::from_millis(20)));
-    assert_eq!(iter.next(), Some(Duration::from_millis(30)));
-    assert_eq!(iter.next(), Some(Duration::from_millis(50)));
-    assert_eq!(iter.next(), Some(Duration::from_millis(80)));
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn returns_the_fibonacci_series_starting_at_10() {
+        let mut iter = FibonacciBackoff::from_millis(10);
+        assert_eq!(iter.next(), Some(Duration::from_millis(10)));
+        assert_eq!(iter.next(), Some(Duration::from_millis(10)));
+        assert_eq!(iter.next(), Some(Duration::from_millis(20)));
+        assert_eq!(iter.next(), Some(Duration::from_millis(30)));
+        assert_eq!(iter.next(), Some(Duration::from_millis(50)));
+        assert_eq!(iter.next(), Some(Duration::from_millis(80)));
+    }
 
-#[test]
-fn saturates_at_maximum_value() {
-    let mut iter = FibonacciBackoff::from_millis(u64::MAX);
-    assert_eq!(iter.next(), Some(Duration::from_millis(u64::MAX)));
-    assert_eq!(iter.next(), Some(Duration::from_millis(u64::MAX)));
-}
+    #[test]
+    fn saturates_at_maximum_value() {
+        let mut iter = FibonacciBackoff::from_millis(u64::MAX);
+        assert_eq!(iter.next(), Some(Duration::from_millis(u64::MAX)));
+        assert_eq!(iter.next(), Some(Duration::from_millis(u64::MAX)));
+    }
 
-#[test]
-fn stops_increasing_at_max_delay() {
-    let mut iter = FibonacciBackoff::from_millis(10).max_delay(Duration::from_millis(50));
-    assert_eq!(iter.next(), Some(Duration::from_millis(10)));
-    assert_eq!(iter.next(), Some(Duration::from_millis(10)));
-    assert_eq!(iter.next(), Some(Duration::from_millis(20)));
-    assert_eq!(iter.next(), Some(Duration::from_millis(30)));
-    assert_eq!(iter.next(), Some(Duration::from_millis(50)));
-    assert_eq!(iter.next(), Some(Duration::from_millis(50)));
-}
+    #[test]
+    fn stops_increasing_at_max_delay() {
+        let mut iter = FibonacciBackoff::from_millis(10).max_delay(Duration::from_millis(50));
+        assert_eq!(iter.next(), Some(Duration::from_millis(10)));
+        assert_eq!(iter.next(), Some(Duration::from_millis(10)));
+        assert_eq!(iter.next(), Some(Duration::from_millis(20)));
+        assert_eq!(iter.next(), Some(Duration::from_millis(30)));
+        assert_eq!(iter.next(), Some(Duration::from_millis(50)));
+        assert_eq!(iter.next(), Some(Duration::from_millis(50)));
+    }
 
-#[test]
-fn returns_max_when_max_less_than_base() {
-    let mut iter = FibonacciBackoff::from_millis(20).max_delay(Duration::from_millis(10));
+    #[test]
+    fn returns_max_when_max_less_than_base() {
+        let mut iter = FibonacciBackoff::from_millis(20).max_delay(Duration::from_millis(10));
 
-    assert_eq!(iter.next(), Some(Duration::from_millis(10)));
-    assert_eq!(iter.next(), Some(Duration::from_millis(10)));
-}
+        assert_eq!(iter.next(), Some(Duration::from_millis(10)));
+        assert_eq!(iter.next(), Some(Duration::from_millis(10)));
+    }
 
-#[test]
-fn can_use_factor_to_get_seconds() {
-    let factor = 1000;
-    let mut s = FibonacciBackoff::from_millis(1).factor(factor);
+    #[test]
+    fn can_use_factor_to_get_seconds() {
+        let factor = 1000;
+        let mut s = FibonacciBackoff::from_millis(1).factor(factor);
 
-    assert_eq!(s.next(), Some(Duration::from_secs(1)));
-    assert_eq!(s.next(), Some(Duration::from_secs(1)));
-    assert_eq!(s.next(), Some(Duration::from_secs(2)));
+        assert_eq!(s.next(), Some(Duration::from_secs(1)));
+        assert_eq!(s.next(), Some(Duration::from_secs(1)));
+        assert_eq!(s.next(), Some(Duration::from_secs(2)));
+    }
 }

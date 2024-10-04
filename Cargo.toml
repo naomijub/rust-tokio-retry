@@ -1,6 +1,6 @@
 [package]
 name = "tokio-retry2"
-version = "0.5.4"
+version = "0.5.5"
 authors = ["Julia Naomi <jnboeira@outlook.com>","Sam Rijs <srijs@airpost.net>"]
 description = "Extensible, asynchronous retry behaviours for futures/tokio"
 license = "MIT"
@@ -12,11 +12,13 @@ edition = "2021"
 
 [features]
 jitter = ["rand"]
+tracing = ["dep:tracing"]
 implicit_results = []
 
 [dependencies]
 rand = { version = "0.8.5", optional = true }
 tokio = { version = "1.40", features = ["time"] }
+tracing = { version = "0.1.40", optional = true }
 pin-project = "1.1.5"
 
 [dev-dependencies]

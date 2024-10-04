@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.5.5
+
+- Include feature `tracing` to inform when a `max_duration` or `max_delay` has been reached.
+- Fixed bug that `retry_after` duration was not overwriting the strategy duration.
+
 ## Version 0.5.4
 
 - Exports `MaxIntervalIterator` as standard `strategy` struct.
