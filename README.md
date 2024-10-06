@@ -90,3 +90,32 @@ Actions must return a `RetryError` that can wrap any other error type. There are
     1. `fn map_transient_err(self) -> Result<T, RetryError<E>>;`
     2. `fn map_permanent_err(self) -> Result<T, RetryError<E>>;`
 - Using the `?` operator on an `Option` type will always propagate a `RetryError::Transient<E>` with no extra duration.
+
+## Retry Strategies breakdown:
+
+There are 4 backoff strategies:
+- `ExponentialBackoff`: base is considered the initial retry interval, so if defined from 500ms, the next retry will happen at 250000ms.
+    | attempt | delay |
+    |---------|-------|
+    | 1       | 500ms |
+    | 2       | 250000ms|
+- `ExponentialFactorBackoff`: this is a exponential backoff strategy with a base factor. What is exponentially configured is the factor, while the base retry delay is the same. So if a factor 2 is applied to an initial delay off 500ms, the attempts are as follows:
+    | attempt | delay |
+    |---------|-------|
+    | 1       | 500ms |
+    | 2       | 1000ms|
+    | 3       | 2000ms|
+    | 4       | 4000ms|
+- `FixedInterval`: in this backoff strategy, a fixed interval is used as constant. so if defined from 500ms, all attempts will happen at 500ms.
+    | attempt | delay |
+    |---------|-------|
+    | 1       | 500ms|
+    | 2       | 500ms|
+    | 3       | 500ms|
+- `FibonacciBackoff`: a Fibonacci backoff strategy is used. so if defined from 500ms, the next retry will happen at 500ms, and the following will be at 1000ms.
+    | attempt | delay |
+    |---------|-------|
+    | 1       | 500ms|
+    | 2       | 500ms|
+    | 3       | 1000ms|
+    | 4       | 1500ms|

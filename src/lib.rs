@@ -1,6 +1,36 @@
 //! This library provides extensible asynchronous retry behaviours
 //! for use with the ecosystem of [`tokio`](https://tokio.rs/) libraries.
 //!
+//! There are 4 backoff strategies:
+//! - `ExponentialBackoff`: base is considered the initial retry interval, so if defined from 500ms, the next retry will happen at 250000ms.
+//!     | attempt | delay |
+//!     |---------|-------|
+//!     | 1       | 500ms |
+//!     | 2       | 250000ms|
+//! - `ExponentialFactorBackoff`: this is a exponential backoff strategy with a base factor. What is exponentially configured is the factor, while the base retry delay is the same. So if a factor 2 is applied to an initial delay off 500ms, the attempts are as follows:
+//!     | attempt | delay |
+//!     |---------|-------|
+//!     | 1       | 500ms |
+//!     | 2       | 1000ms|
+//!     | 3       | 2000ms|
+//!     | 4       | 4000ms|
+//!
+//! - `FixedInterval`: in this backoff strategy, a fixed interval is used as constant. so if defined from 500ms, all attempts will happen at 500ms.
+//!     | attempt | delay |
+//!     |---------|-------|
+//!     | 1       | 500ms|
+//!     | 2       | 500ms|
+//!     | 3       | 500ms|
+//! - `FibonacciBackoff`: a Fibonacci backoff strategy is used. so if defined from 500ms, the next retry will happen at 500ms, and the following will be at 1000ms.
+//!     | attempt | delay |
+//!     |---------|-------|
+//!     | 1       | 500ms|
+//!     | 2       | 500ms|
+//!     | 3       | 1000ms|
+//!     | 4       | 1500ms|
+//!
+//! > All strategies can be jittered with the `jitter` feature.
+//!
 //! # Installation
 //!
 //! Add this to your `Cargo.toml`:
@@ -31,6 +61,7 @@
 //!     .take(3);    // limit to 3 retries
 //!
 //! let result = Retry::spawn(retry_strategy, action).await?;
+//! // First retry in 10ms, second in 100ms, third in 100ms
 
 //! # Ok(())
 //! # }
@@ -40,8 +71,8 @@
 //!
 //! One key difference between `tokio-retry2` and `tokio-retry` is the fact that `tokio-retry2`
 //! supports early exits from the retry loop based on your error type. This allows you to pattern match
-//! your errors and define if you want to continue retrying or not. The following functions are
-//! helper functions to deal with it:
+//! your errors and define if you want to continue retrying or not, while `tokio-retry` only supported conditional `RetryIf`.
+//! The following functions are helper functions to deal with it:
 //!
 //! ```rust,no_run
 //! use tokio_retry2::{Retry, RetryError};
@@ -102,9 +133,9 @@
 //!
 //! ```rust,no_run
 //! use tokio_retry2::Retry;
-//! use tokio_retry2::strategy::{ExponentialBackoff, jitter_range, MaxInterval};
+//! use tokio_retry2::strategy::{ExponentialFactorBackoff, jitter_range, MaxInterval};
 //!
-//! let retry_strategy = ExponentialBackoff::from_millis(10)
+//! let retry_strategy = ExponentialFactorBackoff::from_millis(10, 2.)
 //!    .max_interval(10000) // set max interval to 10 seconds
 //!    .map(jitter_range(0.5, 1.2)) // add jitter ranging between 50% and 120% to the retry interval
 //!    .take(3);    // limit to 3 retries

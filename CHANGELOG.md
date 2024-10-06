@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.5.6
+- Added `ExponentialFactorBackoff`, where the exponential value is the factor and not the duration.
+
 ## Version 0.5.5
 
 - Include feature `tracing` to inform when a `max_duration` or `max_delay` has been reached.
